@@ -13,7 +13,7 @@ class Task(Base):
 
     id = Column(Integer, primary_key=True)
     title = Column(String, nullable=False)
-    description = Column(String, nullable=False)
+    description = Column(String)
     status = Column(SQLEnum(TaskStatus), default=TaskStatus.todo, nullable=False)
     due_date = Column(DateTime, nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id"), index=True)
