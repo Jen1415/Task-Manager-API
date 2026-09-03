@@ -94,3 +94,82 @@ async def test_delete_task(async_client, auth_headers):
 async def test_delete_task_not_found(async_client, auth_headers):
     response = await async_client.delete("/tasks/9999", headers=auth_headers)
     assert response.status_code == 404
+
+# cross-user ownership
+async def test_cannot_access_other_user_task(async_client, auth_headers, second_user_headers):
+    create_response = await async_client.post(
+        "/tasks/",
+        json={
+            "title": "User A's private task",
+            "due_date": datetime.now(timezone.utc).isoformat(),
+        },
+        headers=auth_headers
+    )
+    task_id = create_response.json()["id"]
+
+    get_response = await async_client.get(
+        f"tasks/{task_id}",
+        headers=second_user_headers
+    )
+
+    assert get_response.status_code == 404
+
+async def test_cannot_update_other_users_task(async_client, auth_headers, second_user_headers):
+    create_response = await async_client.post(
+        "/tasks/",
+        json={
+            "title": "User A's private task",
+            "due_date": datetime.now(timezone.utc).isoformat(),
+        },
+        headers=auth_headers,
+    )
+    task_id = create_response.json()["id"]
+
+    update_response = await async_client.patch(
+        f"/tasks/{task_id}",
+        json={
+            "title": "Hijacked!"  
+        },
+        headers=second_user_headers
+    )
+    assert update_response.status_code == 404
+
+async def test_cannot_delete_other_users_task(async_client, auth_headers, second_user_headers):
+    create_response = await async_client.post(
+        "/tasks/",
+        json={
+            "title": "User A's private task",
+            "due_date": datetime.now(timezone.utc).isoformat(),
+        },
+        headers=auth_headers,
+    )
+    task_id = create_response.json()["id"]
+
+    delete_response = await async_client.delete(
+        f"/tasks/{task_id}",
+        headers=second_user_headers
+    )
+    assert delete_response.status_code == 404
+
+async def test_users_only_see_own_tasks_in_list(async_client, auth_headers, second_user_headers):
+    await async_client.post(
+        "/tasks/",
+        json={
+            "title": "User A's task",
+            "due_date": datetime.now(timezone.utc).isoformat(),
+        },
+        headers=auth_headers,
+    )
+    await async_client.post(
+        "/tasks/",
+        json={
+            "title": "User B's task",
+            "due_date": datetime.now(timezone.utc).isoformat(),
+        },
+        headers=second_user_headers,
+    )
+
+    response = await async_client.get("/tasks/", headers=auth_headers)
+    tasks = response.json()
+    assert len(tasks) == 1
+    assert tasks[0]["title"] == "User A's task"

@@ -66,3 +66,16 @@ async def auth_headers(async_client):
     )
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}   
+
+@pytest_asyncio.fixture()
+async def second_user_headers(async_client):
+    await async_client.post(
+        "/users/",
+        json={"email": "otheruser@example.com", "password": "strongpassword123"}
+    )
+    response = await async_client.post(
+        "/auth/login",
+        data={"username": "otheruser@example.com", "password": "strongpassword123"}
+    )
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
