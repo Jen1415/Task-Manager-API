@@ -18,8 +18,7 @@ def get_current_user(db: db_dependency, token: Annotated[str, Depends(oauth2_sch
     )
 
     payload = decode_access_token(token)
-
-    if token is None:
+    if payload is None:
         raise credentials_exception
     
     email = payload.get("sub")
