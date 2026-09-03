@@ -173,3 +173,13 @@ async def test_users_only_see_own_tasks_in_list(async_client, auth_headers, seco
     tasks = response.json()
     assert len(tasks) == 1
     assert tasks[0]["title"] == "User A's task"
+
+# missing field
+async def test_create_task_missing_required_field(async_client, auth_headers):
+    response = await async_client.post(
+        "/tasks/",
+        json={"title": "Missing due date"},
+        headers=auth_headers
+    )
+
+    assert response.status_code == 422
