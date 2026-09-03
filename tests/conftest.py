@@ -53,3 +53,16 @@ async def async_client(db):
         yield ac
 
     app.dependency_overrides.clear()
+
+@pytest_asyncio.fixture()
+async def auth_headers(async_client):
+    await async_client.post(
+        "/users/",
+        json={"email": "testuser@example.com", "password": "strongpassword123"},
+    )
+    response = await async_client.post(
+        "/auth/login",
+        data={"username": "testuser@example.com", "password": "strongpassword123"},
+    )
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}   
