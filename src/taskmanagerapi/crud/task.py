@@ -3,13 +3,13 @@ from taskmanagerapi.models.task import Task
 from taskmanagerapi.schemas.task import TaskCreate, TaskUpdate
 
 
-def get_tasks(db: Session, skip: int, limit: int) -> list[Task]:
-    tasks = db.query(Task).order_by(Task.id).offset(skip).limit(limit).all()
+def get_tasks(db: Session, owner_id: int, skip: int, limit: int) -> list[Task]:
+    tasks = db.query(Task).filter(Task.owner_id == owner_id).order_by(Task.id).offset(skip).limit(limit).all()
     return tasks
 
 
-def get_task(db: Session, task_id: int) -> Task | None:
-    return db.query(Task).filter(Task.id == task_id).first()
+def get_task(db: Session, task_id: int, owner_id: int) -> Task | None:
+    return db.query(Task).filter(Task.id == task_id, Task.owner_id == owner_id).first()
 
 
 def create_task(db: Session, task: TaskCreate, owner_id: int) -> Task:
@@ -20,8 +20,8 @@ def create_task(db: Session, task: TaskCreate, owner_id: int) -> Task:
     return db_task
 
 
-def update_task(db: Session, task_id: int, task: TaskUpdate) -> Task | None:
-    db_task = db.query(Task).filter(Task.id == task_id).first()
+def update_task(db: Session, task_id: int, task: TaskUpdate, owner_id: int) -> Task | None:
+    db_task = db.query(Task).filter(Task.id == task_id, Task.owner_id == owner_id).first()
     if db_task is None:
         return None
 
@@ -34,8 +34,8 @@ def update_task(db: Session, task_id: int, task: TaskUpdate) -> Task | None:
     return db_task
 
 
-def delete_task(db: Session, task_id: int) -> dict | None:
-    db_task = db.query(Task).filter(Task.id == task_id).first()
+def delete_task(db: Session, task_id: int, owner_id: int) -> dict | None:
+    db_task = db.query(Task).filter(Task.id == task_id, Task.owner_id == owner_id).first()
     if db_task is None:
         return None
     db.delete(db_task)
